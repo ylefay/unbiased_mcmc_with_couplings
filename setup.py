@@ -1,5 +1,5 @@
 import sys
-import setuptools
+from setuptools import setup, find_packages
 
 # READ README.md for long description on PyPi.
 try:
@@ -9,13 +9,14 @@ except Exception as e:
     sys.stderr.flush()
     long_description = ""
 
-setuptools.setup(
-    name="unbiased_mcmc_with_couplings",
+setup(
+    name="pymcmc_unbiased",
     author="Thomas Michel, Matthieu Dinot, Yvann Le Fay",
     description="Implementation of unbiased MCMC estimators using coupling (Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019)",
     long_description=long_description,
-    version="0.1",
-    packages=setuptools.find_packages(),
+    version="0.1.0",
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=[
         "pytest",
         "numpy",
