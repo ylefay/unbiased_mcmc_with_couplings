@@ -4,7 +4,7 @@ from src.pymcmc_unbiased.maximal_coupling import maximal_coupling
 from functools import partial
 
 
-def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target, lag=1):
+def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target):
     """
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
@@ -40,10 +40,32 @@ def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target, lag=1):
         x = q_hat(sample_key_k, x1=x)
         return x, x
 
+    _, chains = jax.lax.scan(iter_mh, (x0, y0), keys)
+    return chains
+
+
+def run_chain(keys, x0, q_hat):
+    def sample_from_transition_kernel(x, inp):
+        sample_key_k = inp
+        x = q_hat(sample_key_k, x1=x)
+        return x, x
+
+    _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys)
+    return Xs
+
+
+def metropolis_hasting_with_lag(keys, x0, y0, q_hat, log_q, log_target, lag=1):
+    """
+    Metropolis-Hastings coupling sampling procedure for a distribution p and q,
+    Using maximal-coupling procedure.
+    Algorithm 1. in Unbiased Markov Chain Monte Carlo:
+        what, why and how
+    Yves F. Atchadé, Pierre E. Jacob
+    """
     keys_before_lag = keys.at[:lag].get()
     keys = keys.at[lag:].get()
     # First sample from the transition kernel lag times.
-    _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys_before_lag)
+    Xs = run_chain(keys_before_lag, x0, q_hat)
     # Then using the coupled transition kernel
-    _, chains = jax.lax.scan(iter_mh, (Xs.at[-1].get(), y0), keys)
+    chains = metropolis_hasting_coupling(keys, Xs.at[-1].get(), y0, q_hat, log_q, log_target, lag)
     return Xs, chains
