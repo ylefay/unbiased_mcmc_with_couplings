@@ -9,12 +9,8 @@ def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
     :param keys: multiple jax.random.PRNGKey
-    :param p_hat: callable
-        sample from the joint distribution p
     :param q_hat: callable
         sample from the joint distribution q
-    :param log_p: callable
-        log density of p
     :param log_q: callable
         log density of q
     :return: jnp.ndarray,
@@ -25,8 +21,8 @@ def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target
         key_k = inp
         coupling_key, sample_key = jax.random.split(key_k)
         x, y = carry
-        _, couple_prop = coupling(coupling_key, partial(q_hat, x1=x), partial(q_hat, x1=y),
-                                  partial(q_hat, x1=x), partial(q_hat, x1=y))
+        _, couple_prop = coupling(coupling_key, p_hat=partial(q_hat, x=x), q_hat=partial(q_hat, x=y),
+                                  log_p=partial(log_q, x=x), log_q=partial(log_q, x=y))
         x_prop, y_prop = couple_prop
         U = jax.random.uniform(sample_key)
         accept_X = jnp.log(U) <= jnp.min(0, log_target(x_prop) + log_q(x_prop, x) - log_target(x) - log_q(x, x_prop))
@@ -42,7 +38,7 @@ def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target
 def run_chain(keys, x0, q_hat):
     def sample_from_transition_kernel(x, inp):
         sample_key_k = inp
-        x = q_hat(sample_key_k, x1=x)
+        x = q_hat(sample_key_k, x=x)
         return x, x
 
     _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys)
@@ -66,4 +62,4 @@ def metropolis_hasting_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, l
     return Xs, chains
 
 
-metropolis_hasting_coupling_with_lag = partial(metropolis_hasting_coupling_with_lag, coupling=maximal_coupling)
+metropolis_hasting_maximal_coupling_with_lag = partial(metropolis_hasting_coupling_with_lag, coupling=maximal_coupling)
