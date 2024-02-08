@@ -35,11 +35,6 @@ def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target
         y = accept_Y * y_prop + (1 - accept_Y) * y
         return (x, y), (x, y)
 
-    def sample_from_transition_kernel(x, inp):
-        sample_key_k = inp
-        x = q_hat(sample_key_k, x1=x)
-        return x, x
-
     _, chains = jax.lax.scan(iter_mh, (x0, y0), keys)
     return chains
 
