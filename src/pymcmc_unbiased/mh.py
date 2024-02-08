@@ -4,7 +4,7 @@ from src.pymcmc_unbiased.maximal_coupling import maximal_coupling
 from functools import partial
 
 
-def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target):
+def mh_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target):
     """
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
@@ -25,14 +25,18 @@ def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target
                                   log_p=partial(log_q, x=x), log_q=partial(log_q, x=y))
         x_prop, y_prop = couple_prop
         U = jax.random.uniform(sample_key)
-        accept_X = jnp.log(U) <= jnp.min(0, log_target(x_prop) + log_q(x_prop, x) - log_target(x) - log_q(x, x_prop))
-        accept_Y = jnp.log(U) <= jnp.min(0, log_target(y_prop) + log_q(y_prop, y) - log_target(y) - log_q(y, y_prop))
+        accept_X = jnp.log(U) <= jnp.min(
+            jnp.array([0, log_target(x_prop) + log_q(x_prop, x) - log_target(x) - log_q(x, x_prop)]))
+        accept_Y = jnp.log(U) <= jnp.min(
+            jnp.array([0, log_target(y_prop) + log_q(y_prop, y) - log_target(y) - log_q(y, y_prop)]))
         x = accept_X * x_prop + (1 - accept_X) * x
         y = accept_Y * y_prop + (1 - accept_Y) * y
         return (x, y), (x, y)
 
     _, chains = jax.lax.scan(iter_mh, (x0, y0), keys)
-    return chains
+    Xs = jnp.insert(chains[0], 0, x0)
+    Ys = jnp.insert(chains[1], 0, y0)
+    return (Xs, Ys)
 
 
 def run_chain(keys, x0, q_hat):
@@ -42,10 +46,11 @@ def run_chain(keys, x0, q_hat):
         return x, x
 
     _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys)
+    Xs = jnp.insert(Xs, 0, x0)
     return Xs
 
 
-def metropolis_hasting_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, log_target, lag=1):
+def mh_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, log_target, lag=1):
     """
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
@@ -58,8 +63,8 @@ def metropolis_hasting_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, l
     # First sample from the transition kernel lag times.
     Xs = run_chain(keys_before_lag, x0, q_hat)
     # Then using the coupled transition kernel
-    chains = metropolis_hasting_coupling(keys, coupling, Xs.at[-1].get(), y0, q_hat, log_q, log_target)
+    chains = mh_coupling(keys, coupling, jnp.array([Xs.at[-1].get()]), y0, q_hat, log_q, log_target)
     return Xs, chains
 
 
-metropolis_hasting_maximal_coupling_with_lag = partial(metropolis_hasting_coupling_with_lag, coupling=maximal_coupling)
+mh_maximal_coupling_with_lag = partial(mh_coupling_with_lag, coupling=maximal_coupling)
