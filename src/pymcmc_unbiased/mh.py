@@ -58,7 +58,7 @@ def metropolis_hasting_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, l
     # First sample from the transition kernel lag times.
     Xs = run_chain(keys_before_lag, x0, q_hat)
     # Then using the coupled transition kernel
-    chains = metropolis_hasting_coupling(keys, coupling, Xs.at[-1].get(), y0, q_hat, log_q, log_target, lag)
+    chains = metropolis_hasting_coupling(keys, coupling, Xs.at[-1].get(), y0, q_hat, log_q, log_target)
     return Xs, chains
 
 
