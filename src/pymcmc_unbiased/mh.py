@@ -4,14 +4,15 @@ from src.pymcmc_unbiased.maximal_coupling import maximal_coupling
 from functools import partial
 
 
-def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target):
+def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target, lag=1):
     """
-    Metropolis-Hastings coupling sampling procedure for a distribution p and q.
+    Metropolis-Hastings coupling sampling procedure for a distribution p and q,
+    Using maximal-coupling procedure.
     :param keys: multiple jax.random.PRNGKey
     :param p_hat: callable
-        sample from the marginal p
+        sample from the joint distribution p
     :param q_hat: callable
-        sample from the marginal q
+        sample from the joint distribution q
     :param log_p: callable
         log density of p
     :param log_q: callable
@@ -34,5 +35,15 @@ def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target):
         y = accept_Y * y_prop + (1 - accept_Y) * y
         return (x, y), (x, y)
 
-    _, chains = jax.lax.scan(iter_mh, (x0, y0), keys)
-    return chains
+    def sample_from_transition_kernel(x, inp):
+        sample_key_k = inp
+        x = q_hat(sample_key_k, x1=x)
+        return x, x
+
+    keys_before_lag = keys.at[:lag].get()
+    keys = keys.at[lag:].get()
+    # First sample from the transition kernel lag times.
+    _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys_before_lag)
+    # Then using the coupled transition kernel
+    _, chains = jax.lax.scan(iter_mh, (Xs.at[-1].get(), y0), keys)
+    return Xs, chains

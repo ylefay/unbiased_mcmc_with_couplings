@@ -36,8 +36,8 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q):
 
     next_key, sample_key, accept_key = jax.random.split(key, 3)
     X = p_hat(sample_key)
-    W = jax.random.uniform(accept_key, (1,)) * log_p(X)
-    coupled = jnp.log(W) <= log_q(X)
-    n_iter, couple = jax.lax.cond(coupled, lambda _: (1, (X, X)), lambda _: otherwise_fun(sample_key),
+    log_W = jnp.log(jax.random.uniform(accept_key)) + log_p(X)
+    coupled = log_W <= log_q(X)
+    n_iter, couple = jax.lax.cond(coupled, lambda _: (0, (X, X)), lambda _: otherwise_fun(sample_key),
                                   None)
     return n_iter, *couple
