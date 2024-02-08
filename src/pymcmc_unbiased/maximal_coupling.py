@@ -29,7 +29,7 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q):
 
         def loop_condition(inps):
             _, log_W_star, Y_star = inps
-            return log_W_star <= log_p(Y_star)
+            return log_W_star > log_p(Y_star)
 
         n_iter, _, Y_star_accepted = jax.lax.while_loop(loop_condition, iter_fun, (0, -jnp.inf, 0., op_key))
         return n_iter, Y_star_accepted
