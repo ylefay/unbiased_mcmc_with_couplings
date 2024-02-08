@@ -4,7 +4,7 @@ from src.pymcmc_unbiased.maximal_coupling import maximal_coupling
 from functools import partial
 
 
-def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target):
+def metropolis_hasting_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target):
     """
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
@@ -25,8 +25,8 @@ def metropolis_hasting_coupling(keys, x0, y0, q_hat, log_q, log_target):
         key_k = inp
         coupling_key, sample_key = jax.random.split(key_k)
         x, y = carry
-        _, couple_prop = maximal_coupling(coupling_key, partial(q_hat, x1=x), partial(q_hat, x1=y),
-                                          partial(q_hat, x1=x), partial(q_hat, x1=y))
+        _, couple_prop = coupling(coupling_key, partial(q_hat, x1=x), partial(q_hat, x1=y),
+                                  partial(q_hat, x1=x), partial(q_hat, x1=y))
         x_prop, y_prop = couple_prop
         U = jax.random.uniform(sample_key)
         accept_X = jnp.log(U) <= jnp.min(0, log_target(x_prop) + log_q(x_prop, x) - log_target(x) - log_q(x, x_prop))
@@ -54,7 +54,7 @@ def run_chain(keys, x0, q_hat):
     return Xs
 
 
-def metropolis_hasting_with_lag(keys, x0, y0, q_hat, log_q, log_target, lag=1):
+def metropolis_hasting_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, log_target, lag=1):
     """
     Metropolis-Hastings coupling sampling procedure for a distribution p and q,
     Using maximal-coupling procedure.
@@ -67,5 +67,8 @@ def metropolis_hasting_with_lag(keys, x0, y0, q_hat, log_q, log_target, lag=1):
     # First sample from the transition kernel lag times.
     Xs = run_chain(keys_before_lag, x0, q_hat)
     # Then using the coupled transition kernel
-    chains = metropolis_hasting_coupling(keys, Xs.at[-1].get(), y0, q_hat, log_q, log_target, lag)
+    chains = metropolis_hasting_coupling(keys, coupling, Xs.at[-1].get(), y0, q_hat, log_q, log_target, lag)
     return Xs, chains
+
+
+metropolis_hasting_coupling_with_lag = partial(metropolis_hasting_coupling_with_lag, coupling=maximal_coupling)
