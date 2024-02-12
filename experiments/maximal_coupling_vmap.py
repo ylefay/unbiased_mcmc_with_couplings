@@ -5,12 +5,11 @@ from src.pymcmc_unbiased.utils import reconstruct_chains, get_coupling_time
 import jax
 import jax.numpy as jnp
 from functools import partial
-import matplotlib.pyplot as plt
 
-OP_key = jax.random.PRNGKey(0)
 
-def test_maximal_coupling():
-    key, next_key = jax.random.split(OP_key, 2)
+@jax.vmap
+def maximal_coupling(key):
+    key, next_key = jax.random.split(key, 2)
 
     dim = 1
     lag = 3
@@ -32,14 +31,13 @@ def test_maximal_coupling():
     keys = jax.random.split(next_key, N)
     Xs_before_lag, chains, tau = mh_maximal_coupling_with_lag(keys, x0=x0, y0=y0, q_hat=q_hat, log_q=log_q,
                                                               log_target=log_target, lag=lag)
-    print(tau)
     reconstructed = reconstruct_chains(Xs_before_lag, chains)
     tau = get_coupling_time(reconstructed)
-    print(tau)
     Xs, Ys = reconstructed
-    plt.plot(range(len(Xs)), Xs, label='Xs')
-    plt.plot(range(lag, lag + len(Ys)), Ys, label='Ys')
-    plt.show()
-    return Xs, Ys
+    return Xs, Ys, tau
 
 
+if __name__ == '__main__':
+    OP_key = jax.random.PRNGKey(0)
+    KEYS = jax.random.split(OP_key, 2)
+    print(maximal_coupling(KEYS))

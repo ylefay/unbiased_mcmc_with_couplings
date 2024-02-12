@@ -27,12 +27,12 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
             n_iter, _, _, key = inps
             next_key, sample_key, accept_key = jax.random.split(key, 3)
             Y_star = q_hat(sample_key)
-            log_W_star = jnp.log(jax.random.uniform(accept_key)) + log_q(Y_star)
+            log_W_star = jnp.log(jax.random.uniform(accept_key))
             return n_iter + 1, log_W_star, Y_star, next_key
 
         def loop_condition(inps):
             _, log_W_star, Y_star, _ = inps
-            return log_W_star <= log_p(Y_star) + jnp.log(eta)
+            return log_W_star <= log_p(Y_star) + jnp.log(eta) - log_q(Y_star)
 
         shape = q_hat(key).shape
         n_iter, _, Y_star_accepted, _ = jax.lax.while_loop(loop_condition, iter_fun,
