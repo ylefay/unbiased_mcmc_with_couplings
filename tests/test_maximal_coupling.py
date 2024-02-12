@@ -11,7 +11,7 @@ def test_maximal_coupling():
     OP_key = jax.random.PRNGKey(0)
     key, next_key = jax.random.split(OP_key, 2)
 
-    dim = 1
+    dim = 5
     lag = 10
 
     chol_sigma = jnp.eye(dim) * 0.1
@@ -27,9 +27,9 @@ def test_maximal_coupling():
     x0 = x0y0.at[:dim].get()
     y0 = x0y0.at[dim:].get()
 
-    N = 100
+    N = 20
     keys = jax.random.split(next_key, N)
-    Xs_before_lag, chains = metropolis_hasting_maximal_coupling_with_lag(keys, x0=x0, y0=y0, q_hat=q_hat, log_q=log_q,
+    Xs_before_lag, chains = mh_maximal_coupling_with_lag(keys, x0=x0, y0=y0, q_hat=q_hat, log_q=log_q,
                                                              log_target=log_target, lag=lag)
     plt.plot(chains[0])
     plt.plot(chains[1])

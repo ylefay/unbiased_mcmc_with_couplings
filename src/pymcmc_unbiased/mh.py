@@ -34,19 +34,24 @@ def mh_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target):
         return (x, y), (x, y)
 
     _, chains = jax.lax.scan(iter_mh, (x0, y0), keys)
-    Xs = jnp.insert(chains[0], 0, x0)
-    Ys = jnp.insert(chains[1], 0, y0)
-    return (Xs, Ys)
+    Xs = jnp.insert(chains[0], 0, x0, axis=0)
+    Ys = jnp.insert(chains[1], 0, y0, axis=0)
+    return Xs, Ys
 
 
-def run_chain(keys, x0, q_hat):
+def run_chain(keys, x0, q_hat, log_q, log_target):
     def sample_from_transition_kernel(x, inp):
         sample_key_k = inp
-        x = q_hat(sample_key_k, x=x)
+        sample_key_uniform, sample_key_k = jax.random.split(sample_key_k, 2)
+        U = jax.random.uniform(sample_key_uniform)
+        x_prop = q_hat(sample_key_k, x=x)
+        accept_X = jnp.log(U) <= jnp.min(
+            jnp.array([0, log_q(x_prop, x) - log_q(x, x_prop) + log_target(x_prop) - log_target(x)]))
+        x = accept_X * x_prop + (1 - accept_X) * x
         return x, x
 
     _, Xs = jax.lax.scan(sample_from_transition_kernel, x0, keys)
-    Xs = jnp.insert(Xs, 0, x0)
+    Xs = jnp.insert(Xs, 0, x0, axis=0)
     return Xs
 
 
@@ -61,9 +66,9 @@ def mh_coupling_with_lag(keys, coupling, x0, y0, q_hat, log_q, log_target, lag=1
     keys_before_lag = keys.at[:lag].get()
     keys = keys.at[lag:].get()
     # First sample from the transition kernel lag times.
-    Xs = run_chain(keys_before_lag, x0, q_hat)
+    Xs = run_chain(keys_before_lag, x0, q_hat, log_q, log_target)
     # Then using the coupled transition kernel
-    chains = mh_coupling(keys, coupling, jnp.array([Xs.at[-1].get()]), y0, q_hat, log_q, log_target)
+    chains = mh_coupling(keys, coupling, Xs.at[-1].get(), y0, q_hat, log_q, log_target)
     return Xs, chains
 
 
