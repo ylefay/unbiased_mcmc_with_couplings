@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from src.pymcmc_unbiased.maximal_coupling import maximal_coupling
+from pymcmc_unbiased.maximal_coupling import maximal_coupling
 from functools import partial
 
 
@@ -22,8 +22,13 @@ def mh_coupling(keys, coupling, x0, y0, q_hat, log_q, log_target):
         coupling_key, sample_key = jax.random.split(key_k)
         carry, tau = carry
         x, y = carry
-        _, couple_prop = coupling(coupling_key, p_hat=partial(q_hat, x=x), q_hat=partial(q_hat, x=y),
-                                  log_p=partial(log_q, x=x), log_q=partial(log_q, x=y))
+        _, couple_prop = coupling(
+            coupling_key, 
+            p_hat=partial(q_hat, x=x), 
+            q_hat=partial(q_hat, x=y),
+            log_p=partial(log_q, x=x), 
+            log_q=partial(log_q, x=y)
+        )
         x_prop, y_prop = couple_prop
         log_U = jnp.log(jax.random.uniform(sample_key))
         accept_X = log_U <= jnp.min(

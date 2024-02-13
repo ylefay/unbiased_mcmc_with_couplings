@@ -1,4 +1,4 @@
-from src.pymcmc_unbiased.mh import metropolis_hasting_maximal_coupling_with_lag
+from pymcmc_unbiased.metropolis_hasting import metropolis_hasting_maximal_coupling_with_lag
 
 
 def wrapped_maximal_coupling_mh(q_hat, log_q, log_target, lag):

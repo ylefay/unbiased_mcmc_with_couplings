@@ -1,7 +1,7 @@
-from src.pymcmc_unbiased.distrib.proposal import random_walk_mh_proposal
-from src.pymcmc_unbiased.distrib.logpdf import normal_logpdf
-from src.pymcmc_unbiased.mh import *
-from src.pymcmc_unbiased.utils import reconstruct_chains, get_coupling_time
+from pymcmc_unbiased.distrib.proposal import random_walk_mh_proposal
+from pymcmc_unbiased.distrib.logpdf import normal_logpdf
+from pymcmc_unbiased.metropolis_hasting import *
+from pymcmc_unbiased.utils import reconstruct_chains, get_coupling_time
 import jax
 import jax.numpy as jnp
 from functools import partial
