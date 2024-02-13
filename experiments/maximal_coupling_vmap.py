@@ -1,11 +1,14 @@
 from pymcmc_unbiased.distrib.proposal import random_walk_mh_proposal
-from pymcmc_unbiased.distrib.logpdf import normal_logpdf
 from pymcmc_unbiased.metropolis_hasting import *
 from pymcmc_unbiased.utils import reconstruct_chains, get_coupling_time
 import jax
 import jax.numpy as jnp
+from jax.scipy.stats import multivariate_normal
 from functools import partial
 
+def normal_logpdf(x, mu, chol_sigma):
+    sigma = chol_sigma @ chol_sigma.T
+    return multivariate_normal.logpdf(x, mean=mu, cov=sigma)
 
 @jax.vmap
 def maximal_coupling(key):
@@ -29,8 +32,15 @@ def maximal_coupling(key):
 
     N = 17
     keys = jax.random.split(next_key, N)
-    Xs_before_lag, chains, tau = mh_maximal_coupling_with_lag(keys, x0=x0, y0=y0, q_hat=q_hat, log_q=log_q,
-                                                              log_target=log_target, lag=lag)
+    Xs_before_lag, chains, tau = mh_maximal_coupling_with_lag(
+        keys, 
+        x0=x0, 
+        y0=y0, 
+        q_hat=q_hat, 
+        log_q=log_q,
+        log_target=log_target, 
+        lag=lag
+    )
     reconstructed = reconstruct_chains(Xs_before_lag, chains)
     tau = get_coupling_time(reconstructed)
     Xs, Ys = reconstructed
@@ -39,5 +49,5 @@ def maximal_coupling(key):
 
 if __name__ == '__main__':
     OP_key = jax.random.PRNGKey(0)
-    KEYS = jax.random.split(OP_key, 2)
+    KEYS = jax.random.split(OP_key, 3)
     print(maximal_coupling(KEYS))

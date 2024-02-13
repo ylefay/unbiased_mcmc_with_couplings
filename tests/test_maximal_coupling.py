@@ -1,15 +1,20 @@
 from pymcmc_unbiased.distrib.proposal import random_walk_mh_proposal
-from pymcmc_unbiased.distrib.logpdf import normal_logpdf
 from pymcmc_unbiased.metropolis_hasting import *
 from pymcmc_unbiased.utils import reconstruct_chains, get_coupling_time
 import jax
 import jax.numpy as jnp
+from jax.scipy.stats import multivariate_normal
 from functools import partial
 import matplotlib.pyplot as plt
 
-OP_key = jax.random.PRNGKey(0)
+from random import randint
+
+def normal_logpdf(x, mu, chol_sigma):
+    sigma = chol_sigma @ chol_sigma.T
+    return multivariate_normal.logpdf(x, mean=mu, cov=sigma)
 
 def test_maximal_coupling():
+    OP_key = jax.random.PRNGKey(randint(0, 1<<30))
     key, next_key = jax.random.split(OP_key, 2)
 
     dim = 1
@@ -39,7 +44,9 @@ def test_maximal_coupling():
     Xs, Ys = reconstructed
     plt.plot(range(len(Xs)), Xs, label='Xs')
     plt.plot(range(lag, lag + len(Ys)), Ys, label='Ys')
-    plt.show()
+    plt.savefig("output.png")
     return Xs, Ys
 
 
+if __name__ == '__main__':
+    test_maximal_coupling()

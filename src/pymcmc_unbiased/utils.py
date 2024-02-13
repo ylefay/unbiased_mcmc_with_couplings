@@ -1,4 +1,4 @@
-import numpy as np
+import jax.numpy as jnp
 
 
 def reconstruct_chains(Xs_before_lag, chains):
@@ -12,7 +12,7 @@ def reconstruct_chains(Xs_before_lag, chains):
         the reconstructed chains ((X_0, ... X_lag, X_{lag+1}, ..., X_T), (Y_0, ..., Y_{T-lag}))
     """
     Xs, Ys = chains
-    Xs = np.concatenate([Xs_before_lag, Xs[1:]], axis=0)
+    Xs = jnp.concatenate([Xs_before_lag, Xs[1:]], axis=0)
     return Xs, Ys
 
 
@@ -25,5 +25,5 @@ def get_coupling_time(chains):
     Xs, Ys = chains
     lag = len(Xs) - len(Ys)
     Xs = Xs[lag:]
-    tau = np.argmin(np.linalg.norm(Xs - Ys, axis=-1)) + lag
+    tau = jnp.argmin(jnp.linalg.norm(Xs - Ys, axis=-1)) + lag
     return tau
