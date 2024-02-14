@@ -35,7 +35,6 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.8, max_iter=10000):
         return next_key, sample_var, cond_var
 
     def otherwise_fun(fun_key):
-        
         def iter_fun(inps):
             inps_key, _, _, n_iter = inps
 
@@ -50,13 +49,12 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.8, max_iter=10000):
         next_key, Y_star, log_W_star = auxilary(fun_key, q_hat)
 
         _, Y_star_accepted, _, n_iter = jax.lax.while_loop(
-            loop_condition, 
+            loop_condition,
             iter_fun,
             (next_key, Y_star, log_W_star, 1)
         )
         return n_iter, Y_star_accepted
 
-    
     next_key, X, log_W = auxilary(key, p_hat)
 
     # condition 
@@ -64,7 +62,7 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.8, max_iter=10000):
     # if
     n_iter, Y = jax.lax.cond(
         coupled,
-        lambda: (0, X), # true
-        lambda: otherwise_fun(next_key) # false
+        lambda: (0, X),  # true
+        lambda: otherwise_fun(next_key)  # false
     )
     return n_iter, X, Y

@@ -27,10 +27,10 @@ def run_chain_coupled(key, x0, y0, q_hat, log_q, log_target, lag, dim, n_chain):
         next_key, sample_key = jax.random.split(key, 2)
 
         Xs = Xs.at[i].set(mh_single_kernel(
-            key=sample_key, 
-            x=Xs[i - 1], 
-            q_hat=q_hat, 
-            log_q=log_q, 
+            key=sample_key,
+            x=Xs[i - 1],
+            q_hat=q_hat,
+            log_q=log_q,
             log_target=log_target
         ))
         return next_key, Xs
@@ -41,10 +41,9 @@ def run_chain_coupled(key, x0, y0, q_hat, log_q, log_target, lag, dim, n_chain):
         body_loop_1,
         (key, Xs)
     )
-        
-    
+
     # ----------------------------------------------Sample X and Y-----------------------------------------
-    
+
     def body_loop_2(i, val):
         key, Xs, Ys, is_coupled, time_coupled = val
         next_key, sample_key = jax.random.split(key, 2)
@@ -72,7 +71,6 @@ def run_chain_coupled(key, x0, y0, q_hat, log_q, log_target, lag, dim, n_chain):
             time_coupled = jax.lax.cond(is_coupled, lambda: i, lambda: time_coupled)
             return x_next, y_next, is_coupled, time_coupled
 
-        
         x_next, y_next, is_coupled, time_coupled = jax.lax.cond(
             is_coupled,
             coupled_case,
@@ -86,9 +84,9 @@ def run_chain_coupled(key, x0, y0, q_hat, log_q, log_target, lag, dim, n_chain):
         return next_key, Xs, Ys, is_coupled, time_coupled
 
     _, Xs, Ys, is_coupled, time_coupled = jax.lax.fori_loop(
-        lag + 1, 
-        n_chain, 
-        body_loop_2, 
+        lag + 1,
+        n_chain,
+        body_loop_2,
         (next_key, Xs, Ys, False, n_chain)
     )
 
