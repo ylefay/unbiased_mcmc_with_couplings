@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 
-def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
+def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.8, max_iter=10000):
     """
     Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019
     :param key: jax.random.PRNGKey
@@ -16,7 +16,7 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
         log density of q
     :param eta: float
         between 0 and 1, when eta is set to 1, the probability of coupling is maximal but the variance of the cost is infinite,
-        if eta < 1, the variance of the cost.
+        if eta < 1, the variance of the cost is bounded.
     :return: jnp.ndarray, int
         a sample (X, Y) from maximal coupling between p and q
         the number of trials before acceptance
@@ -24,8 +24,8 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
 
     log_eta = jnp.log(eta)
 
-    def auxilary(key, marginal):
-        next_key, sample_key, accept_key = jax.random.split(key, 3)
+    def auxilary(aux_key, marginal):
+        next_key, sample_key, accept_key = jax.random.split(aux_key, 3)
 
         # Sample X or Y*
         sample_var = marginal(sample_key)
@@ -34,20 +34,20 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
 
         return next_key, sample_var, cond_var
 
-    def otherwise_fun(key):
+    def otherwise_fun(fun_key):
         
         def iter_fun(inps):
-            key, _, _, n_iter = inps
+            inps_key, _, _, n_iter = inps
 
-            next_key, Y_star, log_W_star = auxilary(key, q_hat)
+            next_key, Y_star, log_W_star = auxilary(inps_key, q_hat)
 
             return next_key, Y_star, log_W_star, n_iter + 1
 
         def loop_condition(inps):
-            _, Y_star, log_W_star, _ = inps
-            return log_W_star <= log_eta + log_p(Y_star) - log_q(Y_star)
+            _, Y_star, log_W_star, n_iter = inps
+            return (log_W_star <= log_eta + log_p(Y_star) - log_q(Y_star)) & (n_iter < max_iter)
 
-        next_key, Y_star, log_W_star = auxilary(key, q_hat)
+        next_key, Y_star, log_W_star = auxilary(fun_key, q_hat)
 
         _, Y_star_accepted, _, n_iter = jax.lax.while_loop(
             loop_condition, 
@@ -64,8 +64,7 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=1):
     # if
     n_iter, Y = jax.lax.cond(
         coupled,
-        lambda _: (0, X), # true
-        lambda _: otherwise_fun(next_key), # false
-        None
+        lambda: (0, X), # true
+        lambda: otherwise_fun(next_key) # false
     )
-    return n_iter, (X, Y)
+    return n_iter, X, Y
