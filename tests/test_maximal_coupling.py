@@ -7,16 +7,18 @@ from random import randint
 
 from pymcmc_unbiased.chain import run_chain_coupled
 
+
 def random_walk_mh_proposal(key, x, chol_sigma):
     return x + chol_sigma @ jax.random.normal(key, (x.shape[-1],))
+
 
 def normal_logpdf(x, mu, chol_sigma):
     sigma = chol_sigma @ chol_sigma.T
     return multivariate_normal.logpdf(x, mean=mu, cov=sigma)
 
 
-def main():
-    OP_key = jax.random.PRNGKey(randint(0, 1<<30))
+def test():
+    OP_key = jax.random.PRNGKey(randint(0, 1 << 30))
     chain_key, x0_key, y0_key = jax.random.split(OP_key, 3)
 
     n_chain = 150
@@ -24,7 +26,7 @@ def main():
     lag = 10
 
     print(f"chain length: {n_chain}, dim x: {dim}, lag: {lag}")
-    
+
     x0 = jax.random.uniform(x0_key, shape=(dim,))
     y0 = jax.random.uniform(y0_key, shape=(dim,))
 
@@ -50,12 +52,8 @@ def main():
     )
 
     print(f"is coupled: {is_coupled}, time coupled: {time_coupled}")
-    
+
     plt.plot(range(len(Xs)), Xs, label='Xs')
     plt.plot(range(lag, lag + len(Ys)), Ys, label='Ys')
     plt.legend(loc="best")
     plt.savefig("output.png")
-
-
-if __name__ == '__main__':
-    main()
