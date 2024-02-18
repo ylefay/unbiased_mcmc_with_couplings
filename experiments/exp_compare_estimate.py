@@ -52,7 +52,7 @@ def simulation_unbiased(key):
 if __name__ == "__main__":
 
     dim = 1
-    n_samples = 1000
+    n_samples = 100
 
     k = 100
     m = 10*k
@@ -72,6 +72,7 @@ if __name__ == "__main__":
 
     samples_unbiased, is_coupled, time = simulation_unbiased(keys)
     print("simulation unbiased done!")
+    print(f"is coupled: {is_coupled}, time: {time}")
 
     import seaborn as sns
     print(samples_default.mean(), samples_unbiased.mean())
