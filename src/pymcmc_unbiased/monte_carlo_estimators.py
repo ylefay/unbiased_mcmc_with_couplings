@@ -33,6 +33,7 @@ def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain)
 
 
 def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=10000):
+    meeting_time = max_iter
     def v(t):
         return jax.lax.cond(
             lag < t - m,
@@ -82,7 +83,7 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
     )
 
     def body_loop_2(inps):
-        key, x_prev, y_prev, mcmc, bias_cancel, is_coupled, time = inps
+        key, x_prev, y_prev, mcmc, bias_cancel, is_coupled, time, meeting_time = inps
         next_key, sample_key = jax.random.split(key, 2)
 
         def coupled_case():
@@ -125,16 +126,22 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
             lambda: bias_cancel + v(time) * (h(x_next) - h(y_next))
         )
 
-        return next_key, x_next, y_next, mcmc, bias_cancel, is_coupled, time + 1
+        meeting_time = jax.lax.cond(
+            is_coupled,
+            lambda: jnp.minimum(meeting_time, time),
+            lambda: meeting_time
+        )
+
+        return next_key, x_next, y_next, mcmc, bias_cancel, is_coupled, time + 1, meeting_time
 
     def cond_loop_2(inps):
-        _, _, _, _, _, is_coupled, time = inps
+        _, _, _, _, _, is_coupled, time, _ = inps
         return (~is_coupled | (time <= m)) & (time < max_iter)
 
-    _, _, _, mcmc, bias_cancel, is_coupled, time = jax.lax.while_loop(
+    _, _, _, mcmc, bias_cancel, is_coupled, time, meeting_time = jax.lax.while_loop(
         cond_loop_2,
         body_loop_2,
-        (next_key, x_next, y0, mcmc, bias_cancel, False, lag + 1)
+        (next_key, x_next, y0, mcmc, bias_cancel, False, lag + 1, max_iter)
     )
 
-    return (mcmc + bias_cancel) / (m - k + 1), is_coupled, time
+    return (mcmc + bias_cancel) / (m - k + 1), is_coupled, time, meeting_time
