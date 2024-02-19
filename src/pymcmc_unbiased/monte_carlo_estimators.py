@@ -6,16 +6,15 @@ from pymcmc_unbiased.maximal_coupling import maximal_coupling
 
 
 def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain):
-    
     def body_loop(time, val):
         key, x_prev, curr_sum = val
         next_key, sample_key = jax.random.split(key, 2)
 
         x_next = mh_single_kernel(
-            key=sample_key, 
-            x=x_prev, 
-            q_hat=q_hat, 
-            log_q=log_q, 
+            key=sample_key,
+            x=x_prev,
+            q_hat=q_hat,
+            log_q=log_q,
             log_target=log_target
         )
 
@@ -34,13 +33,8 @@ def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain)
 
 
 def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=10000):
-    
     def v(t):
-        return jax.lax.cond(
-            lag < t - m,
-            lambda: jnp.floor((t - k) / lag) - jnp.ceil((t - m) / lag) + 1,
-            lambda: jnp.floor((t - k) / lag)
-        )
+        return jnp.floor((t - k) / lag) - jnp.ceil(jnp.maximum(lag, t - m) / lag) + 1.
 
     # case k == 0
     mcmc = jax.lax.cond(
@@ -54,10 +48,10 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
         next_key, sample_key = jax.random.split(key, 2)
 
         x_next = mh_single_kernel(
-            key=sample_key, 
-            x=x_prev, 
-            q_hat=q_hat, 
-            log_q=log_q, 
+            key=sample_key,
+            x=x_prev,
+            q_hat=q_hat,
+            log_q=log_q,
             log_target=log_target
         )
 
@@ -128,7 +122,7 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
         )
 
         return next_key, x_next, y_next, mcmc, bias_cancel, is_coupled, time + 1
-    
+
     def cond_loop_2(inps):
         _, _, _, _, _, is_coupled, time = inps
         return (~is_coupled | (time <= m)) & (time < max_iter)
@@ -140,5 +134,3 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
     )
 
     return (mcmc + bias_cancel) / (m - k + 1), is_coupled, time
-    
-
