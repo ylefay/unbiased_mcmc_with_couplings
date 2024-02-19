@@ -29,7 +29,7 @@ def mh_coupled_kernel(key, x, y, coupling, q_hat, log_q, log_target):
         log_q=lambda z: log_q(y, z)
     )
 
-    log_U = -jax.random.exponential(sample_key)
+    log_U = -jax.random.exponential(accept_key)
     accept_X = log_U <= log_target(x_prop) + log_q(x_prop, x) - log_target(x) - log_q(x, x_prop)
     accept_Y = log_U <= log_target(y_prop) + log_q(y_prop, y) - log_target(y) - log_q(y, y_prop)
 
