@@ -23,7 +23,7 @@ def test():
 
     n_chain = 150
     dim = 1
-    lag = 10
+    lag = 5
 
     print(f"chain length: {n_chain}, dim x: {dim}, lag: {lag}")
 
