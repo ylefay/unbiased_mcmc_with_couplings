@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 
-def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.7, max_iter=10000):
+def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.3, max_iter=10000):
     """
     Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019
     :param key: jax.random.PRNGKey
