@@ -33,7 +33,7 @@ def simulation_unbiased_generic(chain_key, x0, y0):
         return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
 
     return unbiased_monte_carlo_estimation(
-        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m
+        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=10000
     )
 
 
