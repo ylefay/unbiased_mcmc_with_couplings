@@ -32,14 +32,10 @@ def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain)
     return curr_sum / n_chain
 
 
-def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=10000):
+def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e8):
     meeting_time = max_iter
     def v(t):
-        return jax.lax.cond(
-            lag < t - m,
-            lambda: jnp.floor((t - k) / lag) - jnp.ceil((t - m) / lag) + 1,
-            lambda: jnp.floor((t - k) / lag)
-        )
+        return jnp.floor((t - k) / lag) - jnp.ceil(jnp.maximum(lag, t - m) / lag) + 1.
 
     # case k == 0
     mcmc = jax.lax.cond(

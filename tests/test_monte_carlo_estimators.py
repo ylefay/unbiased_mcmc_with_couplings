@@ -20,7 +20,7 @@ def normal_logpdf(x, mu, chol_sigma):
 @jax.vmap
 def simulation_default(key):
     n_chain = 1000
-    dim = 1
+    dim = 4
     chain_key, x0_key = jax.random.split(key, 2)
     x0 = jax.random.uniform(x0_key, shape=(dim,))
 
@@ -43,7 +43,7 @@ def simulation_default(key):
 def simulation_unbiased(key):
     k = 30
     m = 150
-    dim = 1
+    dim = 4
     lag = 10
 
     chain_key, x0_key, y0_key = jax.random.split(key, 3)
