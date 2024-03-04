@@ -78,7 +78,7 @@ def test():
     print(_.mean())
     print("simulation default done!")
 
-    _, is_coupled, time = simulation_unbiased(keys)
+    _, is_coupled, time, meeting_time = simulation_unbiased(keys)
     print(_.mean())
     print("simulation unbiased done!")
     print(is_coupled.flatten())
