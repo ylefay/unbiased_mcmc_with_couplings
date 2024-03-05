@@ -1,5 +1,5 @@
 # Here we compare the performance of the unbiased estimator with the default estimator
-# on a 1D target distribution. We estimate the average of the target distribution.
+# on a bimodal 1D target distribution. Trying to replicate the experiment 5.1.
 
 import jax
 import jax.numpy as jnp
@@ -25,20 +25,30 @@ def normal_logpdf(x, mu, chol_sigma):
     return multivariate_normal.logpdf(x, mean=mu, cov=sigma)
 
 
-def log_target_builder(mu, chol_sigma):
+def log_target_builder(p, mu, chol_sigma):
+    """
+    Bimodal normal distribution:
+        pN(m, s^2) + (1-p)N(-m, s^2)
+    """
+
     def log_target(x):
-        return multivariate_normal.logpdf(x, mean=mu, cov=chol_sigma)
+        return jnp.log(p * multivariate_normal.pdf(x, mean=mu, cov=chol_sigma @ chol_sigma.T) +
+                       (1 - p) * multivariate_normal.pdf(x, mean=-mu, cov=chol_sigma @ chol_sigma.T))
 
     return log_target
 
 
 @jax.vmap
 def simulation_default(key):
-    n_chain = 1000
+    n_chain = 100000
     chain_key, x0_key = jax.random.split(key, 2)
-    x0 = jax.random.uniform(x0_key, shape=(dim,))
 
-    chol_sigma = jnp.eye(dim) * 0.1
+    def pi_0(key):
+        return jax.random.multivariate_normal(key, mean=4 * jnp.ones(dim, ), cov=1 * jnp.eye(dim, ))
+
+    x0 = pi_0(x0_key)
+
+    chol_sigma = jnp.eye(dim) * 3.0
     q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
     def log_q(xp, x):
@@ -52,13 +62,15 @@ def simulation_default(key):
 def simulation_unbiased_builder(k, m):
     @jax.vmap
     def simulation_unbiased(key):
-
         chain_key, x0_key, y0_key = jax.random.split(key, 3)
 
-        x0 = jax.random.uniform(x0_key, shape=(dim,))
-        y0 = jax.random.uniform(y0_key, shape=(dim,))
+        def pi_0(key):
+            return jax.random.multivariate_normal(key, mean=4 * jnp.ones(dim, ), cov=1 * jnp.eye(dim, ))
 
-        chol_sigma = jnp.eye(dim) * 0.1
+        x0 = pi_0(x0_key)
+        y0 = pi_0(y0_key)
+
+        chol_sigma = jnp.eye(dim) * 3.0
         q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
         def log_q(xp, x):
@@ -74,18 +86,20 @@ def simulation_unbiased_builder(k, m):
 if __name__ == "__main__":
 
     dim = 1
-    n_samples = 10
+    n_samples = 1_000
 
-    ks = [1, 10, 100]
-    m_mults = [1, 10, 100]
+    ks = [1, 100, 200]
+    m_mults = [1, 10, 20]
     lag = 1
 
-    sigma_target = jnp.eye(dim)
-    mu = jnp.zeros(dim)
-    log_target = log_target_builder(mu, sigma_target)
+    chol_sigma_target = 1.0 * jnp.eye(dim)
+    mu = jnp.ones(dim) * 4.0
+    log_target = log_target_builder(0.5, mu, chol_sigma_target)
+
 
     def h(x):
-        return x[0]
+        return jax.lax.cond(x[0] > 3., lambda _: 1.0, lambda _: 0.0, x)
+
 
     OP_key = jax.random.PRNGKey(randint(0, 1 << 30))
 
@@ -93,6 +107,9 @@ if __name__ == "__main__":
         columns=[
             "k",
             "m",
+            "ratio_coupled",
+            "mean_estimate_unbiased",
+            "mean_estimate_biased",
             "variance_unbiased",
             "variance_default",
             "average_time",
@@ -112,6 +129,9 @@ if __name__ == "__main__":
             df.loc[len(df)] = {
                 "k": k,
                 "m": m,
+                "ratio_coupled": sum(is_coupled) / n_samples,
+                "mean_estimate_unbiased": jnp.mean(samples_unbiased),
+                "mean_estimate_biased": jnp.mean(samples),
                 "variance_unbiased": jnp.var(samples_unbiased),
                 "variance_default": jnp.var(samples),
                 "average_time": jnp.mean(time),

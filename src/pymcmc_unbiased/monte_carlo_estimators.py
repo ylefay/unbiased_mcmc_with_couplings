@@ -32,10 +32,12 @@ def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain)
     return curr_sum / n_chain
 
 
-def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e8):
+def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e6):
     meeting_time = max_iter
+
     def v(t):
         return jnp.floor((t - k) / lag) - jnp.ceil(jnp.maximum(lag, t - m) / lag) + 1.
+
 
     # case k == 0
     mcmc = jax.lax.cond(
@@ -80,6 +82,8 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
 
     def body_loop_2(inps):
         key, x_prev, y_prev, mcmc, bias_cancel, is_coupled, time, meeting_time = inps
+        """jax.debug.print("time{debug}", debug=time)
+        jax.debug.print("vtime{debug}", debug=v(time))"""
         next_key, sample_key = jax.random.split(key, 2)
 
         def coupled_case():
@@ -127,6 +131,8 @@ def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, la
             lambda: jnp.minimum(meeting_time, time),
             lambda: meeting_time
         )
+        jax.debug.print("is_coupled{debug}", debug=is_coupled)
+        jax.debug.print("meeting_time{debug}", debug=meeting_time)
 
         return next_key, x_next, y_next, mcmc, bias_cancel, is_coupled, time + 1, meeting_time
 

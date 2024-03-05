@@ -19,24 +19,30 @@ def normal_logpdf(x, mu, chol_sigma):
 
 @jax.vmap
 def simulation_default(key):
-    n_chain = 1000
-    dim = 2
+    n_chain = 100000
+    dim = 1
     chain_key, x0_key = jax.random.split(key, 2)
-    x0 = jax.random.uniform(x0_key, shape=(dim,))
 
-    chol_sigma = jnp.eye(dim)
+    def pi_0(key):
+        return jax.random.multivariate_normal(key, mean=4 * jnp.ones(dim, ), cov=1 * jnp.eye(dim, ))
+
+    x0 = pi_0(x0_key)
+
+    chol_sigma = jnp.eye(dim) * 3.0
     q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
     def log_q(xp, x):
         return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
 
     def log_target(x):
-        return jax.lax.cond((x[0] <= 1.) & (x[1] <= 1.) & (x[0] >= 0.) & (x[1] >= 0.), lambda _: 1.,
-                            lambda _: -50.,
-                            None)
+        p = 0.5
+        mu = 4. * jnp.ones(dim)
+        chol_sigma = jnp.eye(dim)
+        return jnp.log(p * multivariate_normal.pdf(x, mean=mu, cov=chol_sigma @ chol_sigma.T) +
+                       (1 - p) * multivariate_normal.pdf(x, mean=-mu, cov=chol_sigma @ chol_sigma.T))
 
     def h(x):
-        return jax.lax.cond(jnp.linalg.norm(x, ord=2) ** 2 <= 1, lambda: 1., lambda: 0.)
+        return jax.lax.cond(x[0] > 3., lambda _: 1.0, lambda _: 0.0, x)
 
     return default_monte_carlo_estimator(chain_key, h, x0, q_hat, log_q, log_target, n_chain)
 
@@ -44,35 +50,40 @@ def simulation_default(key):
 @jax.vmap
 def simulation_unbiased(key):
     k = 100
-    m = 1000
-    dim = 2
+    m = 10000
+    dim = 1
     lag = 1
 
     chain_key, x0_key, y0_key = jax.random.split(key, 3)
 
-    x0 = jax.random.uniform(x0_key, shape=(dim,))
-    y0 = jax.random.uniform(y0_key, shape=(dim,))
+    def pi_0(key):
+        return jax.random.multivariate_normal(key, mean=4 * jnp.ones(dim, ), cov=1 * jnp.eye(dim, ))
 
-    chol_sigma = jnp.eye(dim)
+    x0 = pi_0(x0_key)
+    y0 = pi_0(y0_key)
+
+    chol_sigma = jnp.eye(dim) * 3.0
     q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
     def log_q(xp, x):
         return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
 
     def log_target(x):
-        return jax.lax.cond((x[0] <= 1.) & (x[1] <= 1.) & (x[0] >= 0.) & (x[1] >= 0.), lambda _: 1.,
-                            lambda _: -50.,
-                            None)
+        p = 0.5
+        mu = 4. * jnp.ones(dim)
+        chol_sigma = jnp.eye(dim) * 1.0
+        return jnp.log(p * multivariate_normal.pdf(x, mean=mu, cov=chol_sigma @ chol_sigma.T) +
+                (1 - p) * multivariate_normal.pdf(x, mean=-mu, cov=chol_sigma @ chol_sigma.T))
 
     def h(x):
-        return jax.lax.cond(jnp.linalg.norm(x, ord=2) ** 2 <= 1, lambda: 1., lambda: 0.)
+        return jax.lax.cond(x[0] > 3., lambda _: 1.0, lambda _: 0.0, x)
 
     return unbiased_monte_carlo_estimation(chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m)
 
 
 def test():
     OP_key = jax.random.PRNGKey(randint(0, 1 << 30))
-    keys = jax.random.split(OP_key, 1_000)
+    keys = jax.random.split(OP_key, 1)
 
     _ = simulation_default(keys)
     print(_.mean())
