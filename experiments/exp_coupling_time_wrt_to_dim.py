@@ -69,7 +69,7 @@ def simulation_unbiased_offset(key, dim):
 if __name__ == "__main__":
     result_target = dict()
     result_offset = dict()
-    dims = [1, 2, 3, 4, 5]
+    dims = [1, 2, 3]
     n_samples = 1000
 
     k = 10
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                                                                                                                    dim)
         result_offset[dim] = [samples_unbiased, is_coupled, time, meeting_time]
 
-    with open("results_coupling_time_target.pkl", "wb") as handle:
+    with open("results_coupling_time_target_wrt_to_dim.pkl", "wb") as handle:
         pickle.dump(result_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open("results_coupling_time_offset.pkl", "wb") as handle:
+    with open("results_coupling_time_offset_wrt_to_dim.pkl", "wb") as handle:
         pickle.dump(result_offset, handle, protocol=pickle.HIGHEST_PROTOCOL)

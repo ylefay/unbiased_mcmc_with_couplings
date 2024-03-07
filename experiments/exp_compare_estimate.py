@@ -87,7 +87,7 @@ if __name__ == "__main__":
     result = dict()
 
     dim = 1
-    n_samples = 1_0000
+    n_samples = 1_000
 
     ks = [1, 100, 200]
     m_mults = [1, 10, 100]

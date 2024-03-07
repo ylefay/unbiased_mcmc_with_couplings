@@ -67,7 +67,7 @@ def simulation_unbiased_offset(key, eta):
 if __name__ == "__main__":
     result_target = dict()
     result_offset = dict()
-    etas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    etas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     n_samples = 1000
 
     k = 10
