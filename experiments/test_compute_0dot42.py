@@ -2,7 +2,6 @@ import jax
 import jax.numpy as jnp
 from jax.scipy.stats import multivariate_normal
 from functools import partial
-import matplotlib.pyplot as plt
 from random import randint
 
 from pymcmc_unbiased.monte_carlo_estimators import default_monte_carlo_estimator, unbiased_monte_carlo_estimation

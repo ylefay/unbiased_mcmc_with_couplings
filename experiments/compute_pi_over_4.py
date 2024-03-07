@@ -2,10 +2,11 @@ import jax
 import jax.numpy as jnp
 from jax.scipy.stats import multivariate_normal
 from functools import partial
-import matplotlib.pyplot as plt
 from random import randint
 
 from pymcmc_unbiased.monte_carlo_estimators import default_monte_carlo_estimator, unbiased_monte_carlo_estimation
+
+OP_key = jax.random.PRNGKey(0)
 
 
 def random_walk_mh_proposal(key, x, chol_sigma):
@@ -18,6 +19,7 @@ def normal_logpdf(x, mu, chol_sigma):
 
 
 @jax.vmap
+@jax.jit
 def simulation_default(key):
     n_chain = 1000
     dim = 2
@@ -42,6 +44,7 @@ def simulation_default(key):
 
 
 @jax.vmap
+@jax.jit
 def simulation_unbiased(key):
     k = 100
     m = 1000
@@ -71,7 +74,6 @@ def simulation_unbiased(key):
 
 
 def test():
-    OP_key = jax.random.PRNGKey(randint(0, 1 << 30))
     keys = jax.random.split(OP_key, 1_000)
 
     _ = simulation_default(keys)
