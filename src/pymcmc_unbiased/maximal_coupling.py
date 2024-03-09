@@ -1,10 +1,31 @@
 import jax
 import jax.numpy as jnp
 
-
-def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=10000):
+def modified_thorisson_coupling(key, p_hat, q_hat, log_p, log_q, phi, max_iter=10000):
     """
-    Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019
+    This is the modified Thorisson's Algorithm described in the discussion by M. Gerber and A. Lee of the paper.
+    :param key: jax.random.PRNGKey
+    :param p_hat: callable
+        sample from the marginal p
+    :param q_hat: callable
+        sample from the marginal q
+    :param log_p: callable
+        log density of p
+    :param log_q: callable
+        log density of q
+    :param phi: callable
+        If we let w = q / p and phi = min(eta, w),
+        then we retrieve the coupling Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019.
+    :return: jnp.ndarray, int
+        a sample (X, Y) from a coupling between p and q
+        the number of trials before acceptance
+    """
+
+def coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=10000):
+    """
+    This is the Thorisson's Algorithm with an extra parameter eta.
+    Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019.
+    It is a maximal coupling when eta = 1.
     :param key: jax.random.PRNGKey
     :param p_hat: callable
         sample from the marginal p
@@ -18,7 +39,7 @@ def maximal_coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=10000):
         between 0 and 1, when eta is set to 1, the probability of coupling is maximal but the variance of the cost is infinite,
         if eta < 1, the variance of the cost is bounded.
     :return: jnp.ndarray, int
-        a sample (X, Y) from maximal coupling between p and q
+        a sample (X, Y) from a coupling between p and q
         the number of trials before acceptance
     """
 

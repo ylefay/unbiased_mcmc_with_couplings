@@ -69,8 +69,8 @@ def simulation_unbiased_offset(key, dim):
 if __name__ == "__main__":
     result_target = dict()
     result_offset = dict()
-    dims = [1, 2, 3]
-    n_samples = 1000
+    dims = [1, 2, 3, 4, 5, 6]
+    n_samples = 1_000
 
     k = 10
     m = 10 * k

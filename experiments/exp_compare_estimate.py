@@ -89,9 +89,9 @@ if __name__ == "__main__":
     dim = 1
     n_samples = 1_000
 
-    ks = [1, 100, 200]
-    m_mults = [1, 10, 100]
-    lags = [1, 10, 100]
+    ks = [1, 5, 10, 20, 50, 100]
+    m_mults = [1, 2, 4, 5, 10, 20]
+    lags = [1]
 
     chol_sigma_target = 1.0 * jnp.eye(dim)
     mu = jnp.ones(dim) * 4.0
