@@ -1,8 +1,8 @@
 import jax
 import jax.numpy as jnp
 
+from pymcmc_unbiased.maximal_coupling import coupling
 from pymcmc_unbiased.metropolis_hasting import mh_single_kernel, mh_coupled_kernel
-from pymcmc_unbiased.maximal_coupling import maximal_coupling
 
 
 def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain, burnin_period=0):
@@ -33,7 +33,7 @@ def default_monte_carlo_estimator(key, h, x0, q_hat, log_q, log_target, n_chain,
     return curr_sum / n_chain
 
 
-def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e6, coupling=maximal_coupling):
+def unbiased_monte_carlo_estimation(key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e6, coupling=coupling):
     meeting_time = max_iter
 
     def v(t):

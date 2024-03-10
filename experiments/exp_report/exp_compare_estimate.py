@@ -1,10 +1,11 @@
 # Here we compare the performance of the unbiased estimator with the default estimator
 # on a bimodal 1D target distribution. Trying to replicate the experiment 5.1.
+import pickle
+from functools import partial
+
 import jax
 import jax.numpy as jnp
 from jax.scipy.stats import multivariate_normal
-from functools import partial
-import pickle
 
 from pymcmc_unbiased.monte_carlo_estimators import (
     default_monte_carlo_estimator,
@@ -89,9 +90,9 @@ if __name__ == "__main__":
     dim = 1
     n_samples = 1_000
 
-    ks = [1, 5, 10, 20, 50, 100]
-    m_mults = [1, 2, 4, 5, 10, 20]
-    lags = [1]
+    ks = [1, 5, 10, 25, 50, 100]
+    m_mults = [1, 2, 5, 10, 20]
+    lags = [1, 5, 10]
 
     chol_sigma_target = 1.0 * jnp.eye(dim)
     mu = jnp.ones(dim) * 4.0
@@ -116,5 +117,5 @@ if __name__ == "__main__":
                                                                                                                m, lag)
                     result[k][m][lag] = [samples, samples_unbiased, is_coupled, time, meeting_time]
 
-    with open("exp_compare_estimators.pkl", "wb") as handle:
+    with open("results/exp_compare_estimators_2.pkl", "wb") as handle:
         pickle.dump(result, handle, protocol=pickle.HIGHEST_PROTOCOL)

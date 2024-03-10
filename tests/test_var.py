@@ -1,14 +1,15 @@
+from functools import partial
+from random import randint
+
 import jax
 import jax.numpy as jnp
-from jax.scipy.stats import multivariate_normal
-from functools import partial
 import matplotlib.pyplot as plt
-from random import randint
 import numpy as np
- 
+from jax.scipy.stats import multivariate_normal
+
 from pymcmc_unbiased.monte_carlo_estimators import default_monte_carlo_estimator, unbiased_monte_carlo_estimation
- 
- 
+
+
 def random_walk_mh_proposal(key, x, chol_sigma):
     return x + chol_sigma @ jax.random.normal(key, (x.shape[-1],))
  

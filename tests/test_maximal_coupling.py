@@ -1,9 +1,10 @@
+from functools import partial
+from random import randint
+
 import jax
 import jax.numpy as jnp
-from jax.scipy.stats import multivariate_normal
-from functools import partial
 import matplotlib.pyplot as plt
-from random import randint
+from jax.scipy.stats import multivariate_normal
 
 from pymcmc_unbiased.chain import run_chain_coupled
 

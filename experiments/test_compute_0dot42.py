@@ -1,19 +1,16 @@
+from functools import partial
+
 import jax
 import jax.numpy as jnp
 from jax.scipy.stats import multivariate_normal
-from functools import partial
-from random import randint
 
 from pymcmc_unbiased.monte_carlo_estimators import default_monte_carlo_estimator, unbiased_monte_carlo_estimation
+
+OP_key = jax.random.PRNGKey(0)
 
 
 def random_walk_mh_proposal(key, x, chol_sigma):
     return x + chol_sigma @ jax.random.normal(key, (x.shape[-1],))
-
-
-def normal_logpdf(x, mu, chol_sigma):
-    sigma = chol_sigma @ chol_sigma.T
-    return multivariate_normal.logpdf(x, mean=mu, cov=sigma)
 
 
 @jax.vmap
@@ -31,7 +28,7 @@ def simulation_default(key):
     q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
     def log_q(xp, x):
-        return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
+        return multivariate_normal.logpdf(xp, mean=x, cov=chol_sigma @ chol_sigma.T)
 
     def log_target(x):
         p = 0.5
@@ -65,14 +62,14 @@ def simulation_unbiased(key):
     q_hat = partial(random_walk_mh_proposal, chol_sigma=chol_sigma)
 
     def log_q(xp, x):
-        return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
+        return multivariate_normal.logpdf(x=xp, mean=x, cov=chol_sigma @ chol_sigma.T)
 
     def log_target(x):
         p = 0.5
         mu = 4. * jnp.ones(dim)
         chol_sigma = jnp.eye(dim) * 1.0
         return jnp.log(p * multivariate_normal.pdf(x, mean=mu, cov=chol_sigma @ chol_sigma.T) +
-                (1 - p) * multivariate_normal.pdf(x, mean=-mu, cov=chol_sigma @ chol_sigma.T))
+                       (1 - p) * multivariate_normal.pdf(x, mean=-mu, cov=chol_sigma @ chol_sigma.T))
 
     def h(x):
         return jax.lax.cond(x[0] > 3., lambda _: 1.0, lambda _: 0.0, x)
@@ -81,8 +78,7 @@ def simulation_unbiased(key):
 
 
 def test():
-    OP_key = jax.random.PRNGKey(randint(0, 1 << 30))
-    keys = jax.random.split(OP_key, 1)
+    keys = jax.random.split(OP_key, 1_000)
 
     _ = simulation_default(keys)
     print(_.mean())

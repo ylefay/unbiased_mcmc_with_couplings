@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from pymcmc_unbiased.maximal_coupling import maximal_coupling
+from pymcmc_unbiased.maximal_coupling import coupling
 from pymcmc_unbiased.metropolis_hasting import mh_single_kernel, mh_coupled_kernel
 
 
@@ -63,7 +63,7 @@ def run_chain_coupled(key, x0, y0, q_hat, log_q, log_target, lag, dim, n_chain):
                 key=sample_key,
                 x=Xs[i - 1],
                 y=Ys[i - lag - 1],
-                coupling=maximal_coupling,
+                coupling=coupling,
                 q_hat=q_hat,
                 log_q=log_q,
                 log_target=log_target
