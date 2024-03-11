@@ -36,13 +36,13 @@ def simulation_unbiased_generic(chain_key, x0, y0, chol_target, dim):
         return multivariate_normal.logpdf(x, mean=jnp.zeros(dim, ), cov=cov_target)
 
     return unbiased_monte_carlo_estimation(
-        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=jnp.inf,
-        coupling=partial(coupling, eta=0.8)
+        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e3,
+        coupling=partial(coupling, eta=1.0)
     )
 
 
 ########### Two simulations with different initializations
-@partial(jax.jit, static_argnums=(1,))
+#@partial(jax.jit, static_argnums=(1,))
 def simulation_unbiased_target(key, dim):
     cov_target = sample_invwishart(key, df=dim, scale=jnp.eye(dim))
     chain_key, x0_key, y0_key = jax.random.split(key, 3)
@@ -52,7 +52,7 @@ def simulation_unbiased_target(key, dim):
     return simulation_unbiased_generic(chain_key, x0, y0, chol_target, dim)
 
 
-@partial(jax.jit, static_argnums=(1,))
+#@partial(jax.jit, static_argnums=(1,))
 def simulation_unbiased_offset(key, dim):
     cov_target = sample_invwishart(key, df=dim, scale=jnp.eye(dim))
     chain_key, x0_key, y0_key = jax.random.split(key, 3)
@@ -65,8 +65,8 @@ def simulation_unbiased_offset(key, dim):
 if __name__ == "__main__":
     result_target = dict()
     result_offset = dict()
-    dims = [1, 2, 3, 4, 5]
-    n_samples = 1_000
+    dims = [i for i in range(1, 11)]
+    n_samples = 10
 
     k = 10
     m = 10 * k

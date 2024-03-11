@@ -87,7 +87,7 @@ def modified_thorisson_coupling(key, p_hat, q_hat, log_p, log_q, phi, max_iter=1
     return n_iter, X, Y
 
 
-def coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=1e8):
+def coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=1e6):
     """
     This is the Thorisson's Algorithm with an extra parameter eta.
     Algorithm 2. in Pierre E. Jacob, John O'Leary, Yves F. Atchadé, 2019.
@@ -102,7 +102,7 @@ def coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=1e8):
     :param log_q: callable
         log density of q
     :param eta: float
-        between 0 and 1, when eta is set to 1, the probability of coupling is maximal but the variance of the cost is infinite,
+        between 0 and 1, when eta is set to 1, the probability of coupling is maximal but the variance of the cost is infinite (can be?, there is only a lower bound),
         if eta < 1, the variance of the cost is bounded.
     :return: jnp.ndarray, int
         a sample (X, Y) from a coupling between p and q
@@ -124,9 +124,8 @@ def coupling(key, p_hat, q_hat, log_p, log_q, eta=0.9, max_iter=1e8):
     def otherwise_fun(fun_key):
         def iter_fun(inps):
             inps_key, _, _, n_iter = inps
-
+            jax.debug.print('{debug}',debug=inps_key)
             next_key, Y_star, log_W_star = auxilary(inps_key, q_hat)
-
             return next_key, Y_star, log_W_star, n_iter + 1
 
         def loop_condition(inps):

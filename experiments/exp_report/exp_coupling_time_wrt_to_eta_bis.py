@@ -89,5 +89,5 @@ if __name__ == "__main__":
         )
         result_target[eta] = [samples_unbiased, is_coupled, time, meeting_time]
 
-    with open("../results/results_coupling_time_target_wrt_to_eta_bis.pkl", "wb") as handle:
+    with open("./results/results_coupling_time_target_wrt_to_eta_bis.pkl", "wb") as handle:
         pickle.dump(result_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
