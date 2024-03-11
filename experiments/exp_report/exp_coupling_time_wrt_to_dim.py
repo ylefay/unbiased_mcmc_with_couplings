@@ -62,35 +62,33 @@ def simulation_unbiased_offset(key, dim):
     return simulation_unbiased_generic(chain_key, x0, y0, chol_target, dim)
 
 
-def modify_keys(keys, index):
-    return jax.vmap(lambda subkey: jax.random.fold_in(subkey, index))(keys)
-
 if __name__ == "__main__":
-    result_target = {}
-    result_offset = {}
-    dims = list(range(1, 11))
-    n_samples = 3
+    result_target = dict()
+    result_offset = dict()
+    dims = [i for i in range(1, 11)]
+    n_samples = 10
 
     k = 10
     m = 10 * k
     lag = 1
 
     key_dims = jax.random.split(OP_key, len(dims))
-    
+
+    # Compute the meeting time for each dimension and each initialization
     for i, dim in enumerate(dims):
-        print(f"Processing dimension {dim}")
-        key_list = jax.random.split(key_dims[i], n_samples)
-        # Ensure each key in key_list is unique for this iteration
-        keys = modify_keys(key_list, i)
+        print(dim)
+        key_target, key_offset = jax.random.split(key_dims[i], 2)
+        keys = jax.random.split(key_target, n_samples)
 
-        # Compute the meeting time for each dimension and each initialization
-        key_target, key_offset = jax.random.split(keys[0])
+        samples_unbiased, is_coupled, time, meeting_time = jax.vmap(simulation_unbiased_target, in_axes=(0, None))(keys,
+                                                                                                                   dim)
+        result_target[dim] = [samples_unbiased, is_coupled, time, meeting_time]
 
-        samples_unbiased, is_coupled, time, meeting_time = simulation_unbiased_target(key_target, dim)
-        result_target[dim] = {"samples": samples_unbiased, "is_coupled": is_coupled, "time": time, "meeting_time": meeting_time}
+        keys = jax.random.split(key_offset, n_samples)
 
-        samples_unbiased, is_coupled, time, meeting_time = simulation_unbiased_offset(key_offset, dim)
-        result_offset[dim] = {"samples": samples_unbiased, "is_coupled": is_coupled, "time": time, "meeting_time": meeting_time}
+        samples_unbiased, is_coupled, time, meeting_time = jax.vmap(simulation_unbiased_offset, in_axes=(0, None))(keys,
+                                                                                                                   dim)
+        result_offset[dim] = [samples_unbiased, is_coupled, time, meeting_time]
 
     with open("results/results_coupling_time_target_wrt_to_dim.pkl", "wb") as handle:
         pickle.dump(result_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
