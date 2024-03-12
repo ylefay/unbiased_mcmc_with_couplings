@@ -80,7 +80,7 @@ def simulation_unbiased(key, k, m, lag):
     def log_q(xp, x):
         return normal_logpdf(x=xp, mu=x, chol_sigma=chol_sigma)
 
-    return unbiased_monte_carlo_estimation(chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m)
+    return unbiased_monte_carlo_estimation(chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e4)
 
 
 if __name__ == "__main__":
@@ -105,16 +105,19 @@ if __name__ == "__main__":
             result[k][m] = dict()
             OP_key, key, key2 = jax.random.split(OP_key, 3)
             keys = jax.random.split(key, n_samples)
-            samples = jax.vmap(simulation_default, in_axes=(0, None, None))(keys, k, m - k + 1)
+            # samples = jax.vmap(simulation_default, in_axes=(0, None, None))(keys, k, m - k + 1)
+            samples = jax.lax.map(lambda key: simulation_default(key, k, m - k + 1), keys)
             for lag in lags:
                 print(k, m, lag)
                 if lag <= k:
                     result[k][m][lag] = dict()
                     key2, new_key2 = jax.random.split(key2, 2)
                     keys = jax.random.split(new_key2, n_samples)
-                    samples_unbiased, is_coupled, time, meeting_time = jax.vmap(simulation_unbiased,
-                                                                                in_axes=(0, None, None, None))(keys, k,
-                                                                                                               m, lag)
+                    """jax.vmap(simulation_unbiased,
+                             in_axes=(0, None, None, None))(keys, k,
+                                                            m, lag)"""
+                    samples_unbiased, is_coupled, time, meeting_time = jax.lax.map(
+                        lambda key: simulation_unbiased(key, k, m, lag), keys)
                     result[k][m][lag] = [samples, samples_unbiased, is_coupled, time, meeting_time]
 
     with open("results/exp_compare_estimators_2.pkl", "wb") as handle:

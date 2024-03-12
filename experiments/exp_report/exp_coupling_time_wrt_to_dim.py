@@ -36,8 +36,8 @@ def simulation_unbiased_generic(chain_key, x0, y0, chol_target, dim):
         return multivariate_normal.logpdf(x, mean=jnp.zeros(dim, ), cov=cov_target)
 
     return unbiased_monte_carlo_estimation(
-        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e3,
-        coupling=partial(coupling, eta=1.0)
+        chain_key, h, x0, y0, q_hat, log_q, log_target, lag, k, m, max_iter=1e6,
+        coupling=partial(coupling, eta=0.99)
     )
 
 
@@ -65,8 +65,8 @@ def simulation_unbiased_offset(key, dim):
 if __name__ == "__main__":
     result_target = dict()
     result_offset = dict()
-    dims = [i for i in range(1, 11)]
-    n_samples = 10
+    dims = [i for i in range(1, 9)]
+    n_samples = 1000
 
     k = 10
     m = 10 * k
@@ -80,14 +80,15 @@ if __name__ == "__main__":
         key_target, key_offset = jax.random.split(key_dims[i], 2)
         keys = jax.random.split(key_target, n_samples)
 
-        samples_unbiased, is_coupled, time, meeting_time = jax.vmap(simulation_unbiased_target, in_axes=(0, None))(keys,
-                                                                                                                   dim)
+        """
+        We use a sequential mapping instead of a parallel one to avoid ahead-of-time lowering
+        """
+        samples_unbiased, is_coupled, time, meeting_time = jax.lax.map(lambda key: simulation_unbiased_target(key, dim), keys)
         result_target[dim] = [samples_unbiased, is_coupled, time, meeting_time]
 
         keys = jax.random.split(key_offset, n_samples)
 
-        samples_unbiased, is_coupled, time, meeting_time = jax.vmap(simulation_unbiased_offset, in_axes=(0, None))(keys,
-                                                                                                                   dim)
+        samples_unbiased, is_coupled, time, meeting_time = jax.lax.map(lambda key: simulation_unbiased_offset(key, dim), keys)
         result_offset[dim] = [samples_unbiased, is_coupled, time, meeting_time]
 
     with open("results/results_coupling_time_target_wrt_to_dim.pkl", "wb") as handle:
