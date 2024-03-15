@@ -3,13 +3,13 @@
 Implementation of "Unbiased Markov-Chain Monte Carlo estimators with couplings". Project done as part of the Bayesian
 Machine Learning course by Rémi Bardenet
 
-It includes a coupled Metropolis-Hasting algorithm, and the Thorisson's coupling Algorithm.
-Some scripts to test the algorithms on simple examples, in particular, reproduction of some examples from the paper.
+It includes a coupled Metropolis-Hasting algorithm, the maximal coupling and its generalization, the modified Thorisson's Algorithm.
 
 The R companion-code of the paper is available
 at [https://github.com/pierrejacob/unbiasedmcmc](https://github.com/pierrejacob/unbiasedmcmc).
 
 # How?
+This package requires `jax` and `numpy`. You can use `pip install -e .` to install the package.
 See the `experiments` folder for some examples of how to use the package. 
 
 # References
