@@ -1,7 +1,7 @@
 # unbiased_mcmc_with_couplings
 
 Implementation of "Unbiased Markov-Chain Monte Carlo estimators with couplings". Project done as part of the Bayesian
-Machine Learning course by Rémi Bardenet
+Machine Learning course by Rémi Bardenet and Julyan Arbel.
 
 It includes a coupled Metropolis-Hasting algorithm, the maximal coupling and its generalization, the modified Thorisson's Algorithm.
 
